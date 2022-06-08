@@ -1,1 +1,9 @@
 #Gitignore
+# token and keys
+token
+# origional bash files
+BashPipelineScripts/
+# Data
+Data/
+#ignore snakemakefiles
+**/.snakemake
