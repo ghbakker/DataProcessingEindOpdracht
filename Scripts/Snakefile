@@ -1,16 +1,30 @@
 configfile: "../config.yaml"
-#workdir: "../TempFiles/"
+workdir: "../TempFiles/"
 
 rule all:
     input:
-        expand("sorted_read/{sample}.bam", sample = config['TestSamples'])
+        expand("sorted_read/{sample}.bam.bai", sample = config['TestSamples'])
 
 rule bam_sort:
     input:
-        "../data/{sample}.bam"
+        "../Data/{sample}.bam"
     output:
         "sorted_read/{sample}.bam"
     threads: config["Threads"]
     log: "log/bamsort/{sample}.log"
     shell:
         "samtools sort {input} > {output} --threads {threads} 2> {log}"
+
+rule index_bam:
+    input:
+        "sorted_read/{sample}.bam"
+    output:
+        "sorted_read/{sample}.bam.bai"
+    threads: config["Threads"]
+    log: "log/bamsort/{sample}.bai.log"
+    shell:
+        "samtools index {input} 2> {log}"
+
+rule clean:
+    shell:
+        "rm -f -r sorted_read/ log/"

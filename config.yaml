@@ -1,6 +1,7 @@
-Threads: 60
+Threads: 16
 TestSamples:
   KO1: KO1
+  WT: WT
 Samples:
   KO1: KO1
   KO2: KO2
