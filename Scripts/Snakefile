@@ -25,6 +25,21 @@ rule index_bam:
     shell:
         "samtools index {input} 2> {log}"
 
+# need to get and convert human and mouse genome for the following rules. But Disc Quota.
+rule variant_calling:
+    input:
+        ref="data/mm10.fa",
+        fai="data/mm10.fa.fai",
+        bam="sorted_read/{sample}.bam"
+    output:
+        "{sample}.vcf"
+    message:
+        "Performing Variant Calling with freebayes for the following bam files: {input.bam}"
+    threads: config["Threads"]
+    log: "log/variant_calling/{sample}.log"
+    shell:
+        "freebayes-parallel <(fasta_generate_regions.py {input.fai} 100000) {threads} -f {input.ref} -b {input.bam} > {output} 2> {log}"
+
 rule clean:
     shell:
         "rm -f -r sorted_read/ log/"

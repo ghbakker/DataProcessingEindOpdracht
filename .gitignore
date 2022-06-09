@@ -7,3 +7,9 @@ BashPipelineScripts/
 Data/
 #ignore snakemakefiles
 **/.snakemake
+# ignore virtual enviroment
+venv/
+# ignore temporary output of the workflow
+TempFiles/
+# Ignore IDEA
+.idea/
