@@ -1,13 +1,14 @@
 configfile: "../config.yaml"
 workdir: "../TempFiles/"
 
+# Sort Bam
 rule all:
     input:
-        expand("sorted_read/{sample}.bam.bai", sample = config['TestSamples'])
+        expand("variants/{sample}.vcf", sample = config['TestSamples'])
 
 rule bam_sort:
     input:
-        "../Data/{sample}.bam"
+        config['DataPath'] + "{sample}.bam"
     output:
         "sorted_read/{sample}.bam"
     threads: config["Threads"]
@@ -25,14 +26,36 @@ rule index_bam:
     shell:
         "samtools index {input} 2> {log}"
 
+# Obtaining the Mouse Reference Genome
+rule convert2bit:
+    input:
+        func="../BashPipelineScripts/twoBitToFa",
+        data=config['DataPath'] + "mm10.2bit"
+    output:
+        config['DataPath'] + "mm10.fa"
+    log: "log/twoBitWoFa/mm10.fa.log"
+    shell:
+        "{input.func} {input.data} {output} 2> {log}"
+
+rule index_fa:
+    input:
+        config['DataPath'] + "mm10.fa"
+    output:
+        config['DataPath'] + "mm10.fa.fai"
+    log: "log/twoBitWoFa/mm10.fa.fai.log"
+    shell:
+        "samtools faidx {input} 2> {log}"
+
+# Variant Calling
 # need to get and convert human and mouse genome for the following rules. But Disc Quota.
 rule variant_calling:
     input:
-        ref="data/mm10.fa",
-        fai="data/mm10.fa.fai",
-        bam="sorted_read/{sample}.bam"
+        ref=config['DataPath'] + "mm10.fa",
+        fai=config['DataPath'] + "mm10.fa.fai",
+        bam="sorted_read/{sample}.bam",
+        bai="sorted_read/{sample}.bam.bai" #not necessary?
     output:
-        "{sample}.vcf"
+        "variants/{sample}.vcf"
     message:
         "Performing Variant Calling with freebayes for the following bam files: {input.bam}"
     threads: config["Threads"]
@@ -40,6 +63,53 @@ rule variant_calling:
     shell:
         "freebayes-parallel <(fasta_generate_regions.py {input.fai} 100000) {threads} -f {input.ref} -b {input.bam} > {output} 2> {log}"
 
+# Filtering Combined Mouse (Make use of temporary files?)
+rule filter:
+    input:
+        "variants/{sample}.vcf"
+    output:
+        "vcf_filter/{sample}_QUAL.vcf"
+    shell:
+        'vcffilter -f "QUAL > 30"  {input} > {output}'
+
+rule DP_filter:
+    input:
+        "vcf_filter/{sample}_QUAL.vcf"
+    output:
+        "vcf_filter/{sample}_DP.vcf"
+    shell:
+        'vcffilter -f "DP > 10" {input} > {output}'
+
+rule decompose:
+    input:
+        "vcf_filter/{sample}_DP.vcf"
+    output:
+        "vcf_outputs/{sample}_decomposed.vcf"
+    shell:
+        "vcfallelicprimitives -g {input} > {output}"
+
+# In Bash this uses two different flows seperated by the if statements.
+rule intersect_vcf:
+    input:
+        "vcf_outpurs/{sample}_decomposed.vcf"
+    output:
+        "vcf_outputs/{sample}_decomposed.vcf.gz"
+    shell:
+        "bgzip -i {input}"
+
+rule BGZIP:
+    input:
+        "vcf_outputs/{sample}_decomposed.vcf.gz"
+    output:
+        "zipped_vcf/{sample}.vcf.gz"
+    shell:
+        "zcat {input} | bgzip -c > {output} "
+
+# Genotypes Variants Mouse.sh
+
+
+
+# Clean Files
 rule clean:
     shell:
         "rm -f -r sorted_read/ log/"
