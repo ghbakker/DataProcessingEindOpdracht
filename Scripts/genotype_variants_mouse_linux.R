@@ -5,12 +5,16 @@ library(gridExtra)
 library(grid)
 library(dplyr)
 
-WT<-read.table("WT_variants", skip="##", fill = TRUE, row.names=NULL)
+# adding command line arguments to make rhis script work with the snakemake pipeline.
+# These arguments are used below to load the WT and KO's and is used to name the output pdf.
+args = commandArgs(trailingOnly = TRUE)
+
+WT<-read.table(args[1] , skip="##", fill = TRUE, row.names=NULL)
 WT<-subset(WT, select = c(1, 2))
 WT<-plyr::rename(WT, c("row.names"="V1", "chr1"="V2"))
 head(WT)
 dim(WT)
-KO<-read.table("KO_variants", skip="##", fill = TRUE, row.names=NULL)
+KO<-read.table(args[2], skip="##", fill = TRUE, row.names=NULL)
 KO<-subset(KO, select = c(1, 2))
 KO<-plyr::rename(KO, c("row.names"="V1", "chr1"="V2"))
 head(KO)
@@ -417,7 +421,7 @@ significance <- p.value < 0.05
 matrix<-cbind(Chromosome, p.value, significance)
 Summary<-data.frame(matrix)
 Summary
-pdf("Summary.pdf", height=11, width=8.5)
+pdf(args[3], height=11, width=8.5)
 grid.table(Summary)
 dev.off()
 proc.time()

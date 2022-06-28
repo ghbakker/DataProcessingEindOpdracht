@@ -4,7 +4,8 @@ workdir: "../TempFiles/"
 # Sort Bam
 rule all:
     input:
-        expand("variants/{sample}.vcf", sample = config['TestSamples'])
+        expand("zipped_vcf/{sample}.vcf.gz" , sample = config['Samples'])
+        #expand("variants/{sample}.vcf", sample = config['TestSamples'])
 
 rule bam_sort:
     input:
@@ -91,7 +92,7 @@ rule decompose:
 # In Bash this uses two different flows seperated by the if statements.
 rule intersect_vcf:
     input:
-        "vcf_outpurs/{sample}_decomposed.vcf"
+        "vcf_outputs/{sample}_decomposed.vcf"
     output:
         "vcf_outputs/{sample}_decomposed.vcf.gz"
     shell:
@@ -106,8 +107,18 @@ rule BGZIP:
         "zcat {input} | bgzip -c > {output} "
 
 # Genotypes Variants Mouse.sh
+# TODO
 
-
+# Visualization
+## TODO combine de KO's
+rule visualize:
+    input:
+        WT = "test",
+        KO = "combined KO's "
+    output:
+        "../Results/.pdf"
+    shell:
+        "Rscript ../Scripts/genotype_variants_mouse_linux.R {input.WT} {input.KO} {output} 2> {log}"
 
 # Clean Files
 rule clean:
