@@ -5,8 +5,6 @@ workdir: "../TempFiles/"
 rule all:
     input:
         "../Results/.pdf"
-        #expand("zipped_vcf/{sample}.vcf.gz" , sample = config['Samples'])
-        #expand("variants/{sample}.vcf", sample = config['TestSamples'])
 
 rule bam_sort:
     input:
