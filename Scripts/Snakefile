@@ -71,24 +71,27 @@ rule filter:
         "variants/{sample}.vcf"
     output:
         "vcf_filter/{sample}_QUAL.vcf"
+    log: "log/filter/{sample}.log"
     shell:
-        'vcffilter -f "QUAL > 30"  {input} > {output}'
+        'vcffilter -f "QUAL > 30"  {input} > {output} 2> {log}'
 
 rule DP_filter:
     input:
         "vcf_filter/{sample}_QUAL.vcf"
     output:
         "vcf_filter/{sample}_DP.vcf"
+    log: "log/DP_filter/{sample}.log"
     shell:
-        'vcffilter -f "DP > 10" {input} > {output}'
+        'vcffilter -f "DP > 10" {input} > {output} 2> {log}'
 
 rule decompose:
     input:
         "vcf_filter/{sample}_DP.vcf"
     output:
         "vcf_outputs/{sample}_decomposed.vcf"
+    log: "log/decompose/{sample}.log"
     shell:
-        "vcfallelicprimitives -g {input} > {output}"
+        "vcfallelicprimitives -g {input} > {output} 2> {log}"
 
 # In Bash this uses two different flows seperated by the if statements.
 rule intersect_vcf:
@@ -96,16 +99,18 @@ rule intersect_vcf:
         "vcf_outputs/{sample}_decomposed.vcf"
     output:
         "vcf_outputs/{sample}_decomposed.vcf.gz"
+    log: "log/intersect_vcf/{sample}.log"
     shell:
-        "bgzip -i {input}"
+        "bgzip -i {input} 2> {log}"
 
 rule BGZIP:
     input:
         "vcf_outputs/{sample}_decomposed.vcf.gz"
     output:
         "zipped_vcf/{sample}.vcf.gz"
+    log: "log/BGZIP/{sample}.log"
     shell:
-        "zcat {input} | bgzip -c > {output} "
+        "zcat {input} | bgzip -c > {output} 2> {log}"
 
 ### Genotypes Variants Mouse.sh
 ## Start with WT:
@@ -116,8 +121,9 @@ rule WT_bcf_intersect:
         "zipped_vcf/WT.vcf.gz"
     output:
         "zipped_vcf/WT.sites.vcf"
+    log: "log/WT_cf_intersect/WT.sites.log"
     shell:
-        "bcftools isec -n =$(ls -1 {input} | wc -l ) {input} > {output}"
+        "bcftools isec -n =$(ls -1 {input} | wc -l ) {input} > {output} 2> {log}"
 
 # TODO maybe bgzip -d WT1.filtered.vcf.gz is needed
 
@@ -127,8 +133,9 @@ rule WT_header:
         "vcf_outputs/WT_decomposed.vcf"
     output:
         "WT_header.vcf"
+    log: "log/WT_header/WT_header.log"
     shell:
-        'grep "#" {input} > {output}'
+        'grep "#" {input} > {output} 2> {log}'
 
 #awk 'FILENAME == "WT.sites.vcf" { remember[$1 $2]=1 ;}
 #     FILENAME != "WT.sites.vcf" { if ( $1 $2 in remember ) print ; } ' WT.sites.vcf WT1.filtered.vcf > WT_1.vcf
@@ -138,9 +145,10 @@ rule WT1_awk:
         filtered="vcf_outputs/WT_decomposed.vcf"
     output:
         "WT_1.vcf"
+    log: "log/WT1_awk/WT_1.log"
     shell:
         "awk \'FILENAME == \"{input.sites}\" {{ remember[$1 $2]=1 ;}}"
-        "FILENAME != \"{input.sites}\" {{ if ( $1 $2 in remember ) print ; }} \' {input.sites} {input.filtered} > {output}"
+        "FILENAME != \"{input.sites}\" {{ if ( $1 $2 in remember ) print ; }} \' {input.sites} {input.filtered} > {output} 2> {log}"
 
 # cat header.vcf WT_1.vcf > WT.intersection.vcf
 rule WT1_cat:
@@ -149,8 +157,9 @@ rule WT1_cat:
         header="WT_header.vcf"
     output:
         "WT.intersection.vcf"
+    log: "log/WT1_cat/WT.intersection.log"
     shell:
-        "cat {input.header} {input.WT} > {output}"
+        "cat {input.header} {input.WT} > {output} 2> {log}"
 
 ## Combine KO's
 # bcftools isec -n =$(ls -1 KO*.filtered.vcf.gz.new.gz | wc -l ) KO*.filtered.vcf.gz.new.gz > KO.sites.vcf
@@ -161,8 +170,9 @@ rule KO_bcf_intersect:
         KO3="zipped_vcf/KO3.vcf.gz"
     output:
         "zipped_vcf/KO.sites.vcf"
+    log: "log/KO_bcf_intersect/KO.sites.log"
     shell:
-        "bcftools isec -n =$(ls -1 {input.KO1} {input.KO2} {input.KO3}| wc -l ) {input.KO1} {input.KO2} {input.KO3} > {output}"
+        "bcftools isec -n =$(ls -1 {input.KO1} {input.KO2} {input.KO3}| wc -l ) {input.KO1} {input.KO2} {input.KO3} > {output} 2> {log}"
 
 # grep "#" KO1.filtered.vcf > header.vcf
 rule KO_header:
@@ -170,8 +180,9 @@ rule KO_header:
         "vcf_outputs/KO1_decomposed.vcf"
     output:
         "KO_header.vcf"
+    log: "log/KO_header/KO_header.log"
     shell:
-        'grep "#" {input} > {output}'
+        'grep "#" {input} > {output} 2> {log}'
 
 # awk 'FILENAME == "KO.sites.vcf" { remember[$1 $2]=1 ;}
 #     FILENAME != "KO.sites.vcf" { if ( $1 $2 in remember ) print ; } ' KO.sites.vcf KO1.filtered.vcf > KO_1.vcf
@@ -181,9 +192,10 @@ rule KO_awk:
         filtered="vcf_outputs/KO1_decomposed.vcf"
     output:
         "KO_1.vcf"
+    log: "log/KO_awk/KO_1.log"
     shell:
         "awk \'FILENAME == \"{input.sites}\" {{ remember[$1 $2]=1 ;}}"
-        "FILENAME != \"{input.sites}\" {{ if ( $1 $2 in remember ) print ; }} \' {input.sites} {input.filtered} > {output}"
+        "FILENAME != \"{input.sites}\" {{ if ( $1 $2 in remember ) print ; }} \' {input.sites} {input.filtered} > {output} 2> {log}"
 
 
 # cat header.vcf KO_1.vcf > KO.intersection.vcf
@@ -193,8 +205,9 @@ rule KO_cat:
         header="KO_header.vcf"
     output:
         "KO.intersection.vcf"
+    log: "log/KO_cat/KO.intersect.log"
     shell:
-        "cat {input.header} {input.WT} > {output}"
+        "cat {input.header} {input.WT} > {output} 2> {log}"
 
 
 # Visualization
@@ -205,6 +218,7 @@ rule visualize:
         KO = "KO.intersection.vcf"
     output:
         "../Results/.pdf"
+    log: "log/visualize/results.log"
     shell:
         "Rscript ../Scripts/genotype_variants_mouse_linux.R {input.WT} {input.KO} {output} 2> {log}"
 
