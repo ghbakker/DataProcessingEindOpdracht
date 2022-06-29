@@ -165,14 +165,12 @@ rule WT1_cat:
 # bcftools isec -n =$(ls -1 KO*.filtered.vcf.gz.new.gz | wc -l ) KO*.filtered.vcf.gz.new.gz > KO.sites.vcf
 rule KO_bcf_intersect:
     input:
-        KO1="zipped_vcf/KO1.vcf.gz",
-        KO2="zipped_vcf/KO2.vcf.gz",
-        KO3="zipped_vcf/KO3.vcf.gz"
+        expand("zipped_vcf/{sample}.vcf.gz",sample=config['KOs'])
     output:
         "zipped_vcf/KO.sites.vcf"
     log: "log/KO_bcf_intersect/KO.sites.log"
     shell:
-        "bcftools isec -n =$(ls -1 {input.KO1} {input.KO2} {input.KO3}| wc -l ) {input.KO1} {input.KO2} {input.KO3} > {output} 2> {log}"
+        "bcftools isec -n =$(ls -1 {input}| wc -l ) {input} > {output} 2> {log}"
 
 # grep "#" KO1.filtered.vcf > header.vcf
 rule KO_header:
@@ -227,7 +225,3 @@ rule clean:
     shell:
         "rm -f -r sorted_read/ log/"
 
-# dag
-rule dag:
-    shell:
-        "snakemake --forceall --dag | dot -Tpng > dag.png"
