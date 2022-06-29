@@ -13,3 +13,5 @@ venv/
 TempFiles/
 # Ignore IDEA
 .idea/
+# Ignore freebayes
+freebayes/
