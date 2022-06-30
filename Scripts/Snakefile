@@ -4,7 +4,7 @@ workdir: "../TempFiles/"
 # Sort Bam
 rule all:
     input:
-        expand("variants/{sample}.vcf",sample=config['Samples'])
+        expand("zipped_vcf/KO.sites.vcf",sample=config['Samples'])
         # "../Results/.pdf"
 
 rule bam_sort:
@@ -61,6 +61,8 @@ rule variant_calling:
         "Performing Variant Calling with freebayes for the following bam files: {input.bam}"
     threads: config["Threads"]
     log: "log/variant_calling/{sample}.log"
+    conda:
+        '../freebayes.yaml'
     shell:
         "freebayes-parallel <(fasta_generate_regions.py {input.fai} 100000) {threads} -f {input.ref} -b {input.bam} > {output} 2> {log}"
 
@@ -111,6 +113,7 @@ rule BGZIP:
     shell:
         "zcat {input} | bgzip -c > {output} 2> {log}"
 
+"""
 ### Genotypes Variants Mouse.sh
 ## Start with WT:
 
@@ -205,7 +208,7 @@ rule KO_cat:
     log: "log/KO_cat/KO.intersect.log"
     shell:
         "cat {input.header} {input.WT} > {output} 2> {log}"
-
+"""
 
 # Visualization
 ## TODO combine de KO's
