@@ -4,7 +4,8 @@ workdir: "../TempFiles/"
 # Sort Bam
 rule all:
     input:
-        "../Results/.pdf"
+        expand("variants/{sample}.vcf",sample=config['Samples'])
+        # "../Results/.pdf"
 
 rule bam_sort:
     input:
