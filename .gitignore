@@ -15,3 +15,5 @@ TempFiles/
 .idea/
 # Ignore freebayes
 freebayes/
+# picard
+picard/

@@ -1,3 +1,6 @@
+myPackages <- c("DescTools", "ggplot2", "reshape2", "gridExtra", "grid", "dplyr")
+invisible(lapply(myPackages, function(cur_pack) if (!require(cur_pack)) install.packages(cur_pack)))
+
 library(DescTools)
 library(ggplot2)
 library(reshape2)
@@ -290,7 +293,7 @@ grid_arrange_shared_legend <- function(..., ncol = length(list(...)), nrow = 1, 
 dsamp <- diamonds[sample(nrow(diamonds), 1000), ]
 
 g <- grid_arrange_shared_legend(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, pX, ncol = 3, nrow=7)
-ggsave("graph.pdf", g, width=36, height=50, units="cm")
+ggsave(args[3], g, width=36, height=50, units="cm")
 
 ### statistical tests ###
 
@@ -421,7 +424,7 @@ significance <- p.value < 0.05
 matrix<-cbind(Chromosome, p.value, significance)
 Summary<-data.frame(matrix)
 Summary
-pdf(args[3], height=11, width=8.5)
+pdf("Summary.pdf", height=11, width=8.5)
 grid.table(Summary)
 dev.off()
 proc.time()
